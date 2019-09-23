@@ -200,6 +200,99 @@
 (declare sessions->chart-data2)
 (declare normal-chart-options)
 
+(defn redef-prdz-state
+  [app-state]
+  (get-in app-state [:domain :redefine-periodization :state]))
+(re-frame/reg-sub
+  ::redef-prdz-state
+  redef-prdz-state)
+
+(defn-traced redef-prdz-box-clicked
+  [app-state [_ redef-prdz-state]]
+  (-> app-state
+      (assoc-in [:domain :redefine-periodization :state] redef-prdz-state)
+      (assoc-in [:domain :backup] (:domain app-state))))
+(re-frame/reg-event-db ::redef-prdz-box-clicked redef-prdz-box-clicked)
+
+(defn redef-prdz-box-display
+  [state]
+  (case state
+    "editing-goal-level" "none"
+    "editing-week" "none"
+    "editing-time" "none"
+    "editing-duration" "none"
+    "flex"))
+(re-frame/reg-sub
+  ::redef-prdz-box-display
+  :<- [::redef-prdz-state]
+  redef-prdz-box-display)
+
+(defn redef-prdz-level-goal-display
+  [state]
+  (case state
+    "editing-goal-level" {:display "flex"}
+    {:display "none"}))
+(re-frame/reg-sub
+  ::redef-prdz-level-goal-display
+  :<- [::redef-prdz-state]
+  redef-prdz-level-goal-display)
+
+(defn redef-prdz-week-display
+  [state]
+  (case state
+    "editing-week" {:display "flex"}
+    {:display "none"}))
+(re-frame/reg-sub
+  ::redef-prdz-week-display
+  :<- [::redef-prdz-state]
+  redef-prdz-week-display)
+
+(defn redef-prdz-time-display
+  [state]
+  (case state
+    "editing-time" "grid"
+    "none"))
+(re-frame/reg-sub
+  ::redef-prdz-time-display
+  :<- [::redef-prdz-state]
+  redef-prdz-time-display)
+
+(defn redef-prdz-duration-display
+  [state]
+  (case state
+    "editing-duration" "flex"
+    "none"))
+(re-frame/reg-sub
+  ::redef-prdz-duration-display
+  :<- [::redef-prdz-state]
+  redef-prdz-duration-display)
+
+(defn-traced redef-prdz-edit-cancel
+  [app-state]
+  (assoc-in app-state [:domain]
+            (get-in app-state [:domain :backup])))
+(re-frame/reg-event-db ::redef-prdz-edit-cancel redef-prdz-edit-cancel)
+
+(defn-traced redef-prdz-edit-ok
+  [app-state]
+  (-> app-state
+      (update-in [:domain :redefine-periodization] dissoc :state)
+      (update-in [:domain] dissoc :backup)))
+(re-frame/reg-event-db ::redef-prdz-edit-ok redef-prdz-edit-ok)
+
+(defn redef-prdz-buttons-display
+  [state]
+  (case state
+    "editing-goal-level" {:display "flex"}
+    "editing-week" {:display "flex"}
+    "editing-time" {:display "flex"}
+    "editing-duration" {:display "flex"}
+    {:display "none"}))
+(re-frame/reg-sub
+  ::redef-prdz-buttons-display
+  :<- [::redef-prdz-state]
+  redef-prdz-buttons-display)
+
 (defcard-rg Macrocíclo
   (fn [devcard-data _]
     (let [{:keys [hidden?]} @devcard-data]
@@ -230,7 +323,294 @@
               :component-did-mount
                 (draw-timeline-chart "macrocycle-timeline"
                                      @(re-frame/subscribe [::app-state/macrocycle-timeline])
-                                     0.98)} "Carregando.."])] ]]]))
+                                     0.98)} "Carregando.."])]
+         [(fn []
+              (let [two-line-box #js {:display "flex"
+                                  :flexFlow "column"
+                                  :backgroundColor "#ebebeb"
+                                  :alignItems "center"
+                                  :flexGrow 1
+                                  :padding "4px"
+                                  :margin "10px 4px 0 4px"
+                                  :boxShadow "1px 3px 6px 2px #0000003b"
+                                  :cursor "pointer"}
+                    adjust-area {:backgroundColor "#ebebeb"
+                                 :height "10vh"
+                                 :minWidth "500px"
+                                 :padding "0 10px"
+                                 :display "flex"
+                                 :flexDirection "column"
+                                 :justifyContent "center"
+                                 :alignItems "center"}
+                    adjust-buttons-style {:backgroundColor "#ebebeb"
+                                          :height "10vh"
+                                          :display "flex"
+                                          :justifyContent "space-around"
+                                          :alignItems "center"
+                                          :marginBottom "2px"}]
+                [:<>
+                 [:style
+                 ".choose-button {
+                    margin: 0 2px;
+                    flex: 1;
+                    padding: 4px;
+                    box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.14),
+                    0 1px 5px 0 rgba(0, 0, 0, 0.12),
+                    0 3px 1px -2px rgba(0, 0, 0, 0.2);
+                    border-radius: 4px;
+                    cursor: pointer;
+                  }
+                  .selected-light{
+                    background: #35b39d;
+                    color: white;
+                  }
+                  .selected-dark{
+                    background: #308c7c;
+                    color: white;
+                  }
+                  .deselected{
+                    background: none;
+                    color: black;
+                  }"]
+                 [:div {:style #js {:display @(re-frame/subscribe [::redef-prdz-box-display])
+                                   :flexWrap "wrap"}}
+                 [:div {:style #js {:display "flex"
+                                    :flexGrow 1}}
+                  [:div
+                   {:style two-line-box
+                    :onClick #(re-frame/dispatch [::redef-prdz-box-clicked "editing-goal-level"])}
+                   [:b @(re-frame/subscribe [::redefine-periodization-goal-txt])]
+                   [:b @(re-frame/subscribe [::redefine-periodization-level-txt])]]
+                  [:div
+                   {:style two-line-box
+                    :onClick #(re-frame/dispatch [::redef-prdz-box-clicked "editing-time"])}
+                   [:b @(re-frame/subscribe [::redefine-periodization-session-time-target])]
+                   [:span "Tempo da Sessão"]]]
+                 [:div {:style #js {:display "flex"
+                                    :flexGrow 1}}
+                  [:div
+                   {:style two-line-box
+                    :onClick #(re-frame/dispatch [::redef-prdz-box-clicked "editing-week"])}
+                   [:b (count @(re-frame/subscribe [::redefine-periodization-week-sessions])) "x"]
+                   [:span "por Semana"]]
+                  [:div
+                   {:style two-line-box
+                    :onClick #(re-frame/dispatch [::redef-prdz-box-clicked "editing-duration"])}
+                   [:b @(re-frame/subscribe [::redef-prdz-planning-months-duration])]
+                   [:span "de Planejamento"]]]]
+                 [:div.goal
+                  {:style (clj->js (merge adjust-area
+                                          @(re-frame/subscribe [::redef-prdz-level-goal-display])))}
+                  [:div
+                   {:style #js {:fontSize "small"
+                                :textAlign "center"
+                                :color "#555"}}
+                   "Objetivo"]
+                  [:div
+                   {:style #js {:display "flex"
+                                :textAlign "center"
+                                :alignSelf "stretch"}}
+                   [:div.choose-button
+                    {:class (@(re-frame/subscribe [::redefine-periodization-goal])
+                                                  "Hipertrofia")
+                     :onClick #(re-frame/dispatch [::redefine-periodization-goal-select "Hipertrofia"])}
+                    "Hipertrofia"]
+                   [:div.choose-button
+                    {:class (@(re-frame/subscribe [::redefine-periodization-goal])
+                                                  "Força")
+                     :onClick #(re-frame/dispatch [::redefine-periodization-goal-select "Força"])}
+                    "Força"]
+                   [:div.choose-button
+                    {:class (@(re-frame/subscribe [::redefine-periodization-goal])
+                                                  "Potência")
+                     :onClick #(re-frame/dispatch [::redefine-periodization-goal-select "Potência"])}
+                    "Potência"]
+                   [:div.choose-button
+                    {:class (@(re-frame/subscribe [::redefine-periodization-goal])
+                                                  "Resistência")
+                     :onClick #(re-frame/dispatch [::redefine-periodization-goal-select "Resistência"])}
+                    "Resistência"]]]
+                 [:div.level
+                  {:style (clj->js (merge adjust-area
+                                          @(re-frame/subscribe [::redef-prdz-level-goal-display])))}
+                  [:div
+                   {:style #js {:fontSize "small"
+                                :textAlign "center"
+                                :color "#555"}}
+                   "Nível"]
+                  [:div
+                   {:style #js {:display "flex"
+                                :textAlign "center"
+                                :alignSelf "stretch"}}
+                   [:div.choose-button
+                    {:class (@(re-frame/subscribe [::redefine-periodization-level])
+                                                  "Iniciante")
+                     :onClick #(re-frame/dispatch [::redefine-periodization-level-select "Iniciante"])}
+                    "Iniciante"]
+                   [:div.choose-button
+                    {:class (@(re-frame/subscribe [::redefine-periodization-level])
+                                                  "Intermediário")
+                     :onClick #(re-frame/dispatch [::redefine-periodization-level-select "Intermediário"])}
+                    "Intermediário"]
+                   [:div.choose-button
+                    {:class (@(re-frame/subscribe [::redefine-periodization-level])
+                                                  "Avançado")
+                     :onClick #(re-frame/dispatch [::redefine-periodization-level-select "Avançado"])}
+                    "Avançado"]]]
+                  [:div.week
+                   {:style (clj->js (merge adjust-area
+                                           @(re-frame/subscribe [::redef-prdz-week-display])))}
+                   [:div
+                    {:style #js {:fontSize "small"
+                                 :textAlign "center"
+                                 :color "#555"}}
+                    "Sessões na Semana"]
+                   [:div
+                    {:style #js {:display "flex"
+                                 :textAlign "center"
+                                 :alignSelf "stretch"}}
+                    [:div.choose-button
+                     {:class (@(re-frame/subscribe [::redefine-periodization-week-sessions-class])
+                                                   "Domingo")
+                      :onClick #(re-frame/dispatch [::redefine-periodization-week-sessions-toggle "Domingo"])}
+                     "Dom"]
+                    [:div.choose-button
+                     {:class (@(re-frame/subscribe [::redefine-periodization-week-sessions-class])
+                                                   "Segunda")
+                      :onClick #(re-frame/dispatch [::redefine-periodization-week-sessions-toggle "Segunda"])}
+                     "Seg"]
+                    [:div.choose-button
+                     {:class (@(re-frame/subscribe [::redefine-periodization-week-sessions-class])
+                                                   "Terça")
+                      :onClick #(re-frame/dispatch [::redefine-periodization-week-sessions-toggle "Terça"])}
+                     "Ter"]
+                    [:div.choose-button
+                     {:class (@(re-frame/subscribe [::redefine-periodization-week-sessions-class])
+                                                   "Quarta")
+                      :onClick #(re-frame/dispatch [::redefine-periodization-week-sessions-toggle "Quarta"])}
+                     "Qua"]
+                    [:div.choose-button
+                     {:class (@(re-frame/subscribe [::redefine-periodization-week-sessions-class])
+                                                   "Quinta")
+                      :onClick #(re-frame/dispatch [::redefine-periodization-week-sessions-toggle "Quinta"])}
+                     "Qui"]
+                    [:div.choose-button
+                     {:class (@(re-frame/subscribe [::redefine-periodization-week-sessions-class])
+                                                   "Sexta")
+                      :onClick #(re-frame/dispatch [::redefine-periodization-week-sessions-toggle "Sexta"])}
+                     "Sex"]
+                    [:div.choose-button
+                     {:class (@(re-frame/subscribe [::redefine-periodization-week-sessions-class])
+                                                   "Sábado")
+                      :onClick #(re-frame/dispatch [::redefine-periodization-week-sessions-toggle "Sábado"])}
+                     "Sab"]]]
+                  [:div.adjust-session-time
+                   {:style #js {:backgroundColor "#ebebeb"
+                                :height "10vh"
+                                :display @(re-frame/subscribe [::redef-prdz-time-display])
+                                :grid "2fr 1fr / 1fr 1fr 1fr"}}
+                   [:span
+                    {:style #js {:gridArea "1 / 1 / 2 / 4"
+                                 :placeSelf "end center"
+                                 :fontSize "1.17em"}}
+                    "Tempo Médio por Sessão"]
+                   [:span
+                    {:style #js {:gridArea "2 / 1"
+                                 :placeSelf "center end"
+                                 :backgroundColor "white"
+                                 :borderRadius "30px"
+                                 :width "30px"
+                                 :height "30px"
+                                 :fontSize "3em"
+                                 :boxShadow "1px 1px 2px 0px black"
+                                 :display "flex"
+                                 :justifyContent "center"
+                                 :alignItems "center"
+                                 :cursor "pointer"}
+                     :onClick #(re-frame/dispatch [::redefine-periodization-session-time-target-add -300])}
+                    [:span {:style #js {:paddingBottom "7px"}} "-"]]
+                   [:b
+                    {:style #js {:gridArea "2 / 2"
+                                 :placeSelf "center"
+                                 :fontSize "1.57em"}}
+                    @(re-frame/subscribe [::redefine-periodization-session-time-target])]
+                   [:span
+                    {:style #js {:gridArea "2 / 3"
+                                 :placeSelf "center start"
+                                 :backgroundColor "white"
+                                 :borderRadius "30px"
+                                 :width "30px"
+                                 :height "30px"
+                                 :textAlign "center"
+                                 :fontSize "2em"
+                                 :boxShadow "1px 1px 2px 0px black"
+                                 :display "flex"
+                                 :justifyContent "center"
+                                 :alignItems "center"
+                                 :cursor "pointer"}
+                     :onClick #(re-frame/dispatch [::redefine-periodization-session-time-target-add 300])}
+                    [:span {:style #js {:paddingBottom "2px"}} "+"]]]
+                  [:div.duration-selector
+                   {:style #js {:backgroundColor "#ebebeb"
+                                :height "10vh"
+                                :minWidth "500px"
+                                :padding "0 10px"
+                                :display @(re-frame/subscribe [::redef-prdz-duration-display])
+                                :justifyContent "space-evenly"
+                                :alignItems "center"}}
+                   [(util/with-mount-fn
+                      [:vaadin-date-picker
+                       {:label "Início do planejamento"
+                        :value @(re-frame/subscribe [::redefine-periodization-planning-start])
+                        :component-did-mount
+                        (fn [this]
+                          (set! (-> (reagent/dom-node this) .-onchange)
+                                #(re-frame/dispatch [::redefine-periodization-planning-start-event
+                                                     (-> % .-target .-value)])))}])]
+                   [(util/with-mount-fn
+                      [:vaadin-date-picker
+                       {:label "Final do planejamento"
+                        :value @(re-frame/subscribe [::redefine-periodization-planning-end])
+                        :component-did-mount
+                        (fn [this]
+                          (set! (-> (reagent/dom-node this) .-onchange)
+                                #(re-frame/dispatch [::redefine-periodization-planning-end-event
+                                                     (-> % .-target .-value)])))}])]]
+                  [:div.duration-text
+                   {:style #js {:backgroundColor "#ebebeb"
+                                :height "8vh"
+                                :minWidth "500px"
+                                :padding "0 10px"
+                                :display @(re-frame/subscribe [::redef-prdz-duration-display])
+                                :flexDirection "column"
+                                :alignItems "center"}}
+                   [:div
+                    {:style #js {:fontSize "small"
+                                 :textAlign "center"
+                                 :color "#555"}}
+                    "Duração do Planejamento"]
+                   [:div
+                    {:style #js {:fontSize "medium"
+                                 :textAlign "center"
+                                 :color "black"}}
+                    @(re-frame/subscribe [::redefine-periodization-planning-duration])]]
+                 [:div
+                  {:style (clj->js
+                            (merge adjust-buttons-style
+                                   @(re-frame/subscribe [::redef-prdz-buttons-display])))}
+                  [:> material-Button
+                   {:style #js {:backgroundColor "#3bbcb7"
+                                :color "white"}
+                    :variant "contained"
+                    :onClick #(re-frame/dispatch [::redef-prdz-edit-cancel])}
+                   "Cancelar"]
+                  [:> material-Button
+                   {:style #js {:width "110px"
+                                :backgroundColor "#3bbcb7"
+                                :color "white"}
+                    :onClick #(re-frame/dispatch [::redef-prdz-edit-ok])
+                    :variant "contained"}
+                   "Ok"]]]))]]]]))
   {:hidden? (reagent/atom false)})
 
 (spec/fdef macrocycle-timeline
@@ -311,17 +691,24 @@
                                           phases))
             [["Macro" "Macrocíclo" initial-date (str macro-final-date)]])))
 
-(defn redefine-periodization-goal
+(defn redefine-periodization-goal-txt
   [app-state]
-  (let [goal (get-in app-state [:domain :redefine-periodization :goal])]
-    (assoc {"Hipertrofia"  "deselected"
-            "Força"        "deselected"
-            "Potência"     "deselected"
-            "Resistência"  "deselected"}
-           goal
-           "selected-light")))
+  (get-in app-state [:domain :redefine-periodization :goal]))
+(re-frame/reg-sub
+  ::redefine-periodization-goal-txt
+  redefine-periodization-goal-txt)
+
+(defn redefine-periodization-goal
+  [goal]
+  (assoc {"Hipertrofia"  "deselected"
+          "Força"        "deselected"
+          "Potência"     "deselected"
+          "Resistência"  "deselected"}
+         goal
+         "selected-light"))
 (re-frame/reg-sub
   ::redefine-periodization-goal
+  :<- [::redefine-periodization-goal-txt]
   redefine-periodization-goal)
 
 (defn-traced redefine-periodization-goal-select
@@ -331,16 +718,23 @@
   ::redefine-periodization-goal-select
   redefine-periodization-goal-select)
 
-(defn redefine-periodization-level
+(defn redefine-periodization-level-txt
   [app-state]
-  (let [level (get-in app-state [:domain :redefine-periodization :level])]
-    (assoc {"Iniciante"     "deselected"
-            "Intermediário" "deselected"
-            "Avançado"      "deselected"}
-           level
-           "selected-light")))
+  (get-in app-state [:domain :redefine-periodization :level]))
+(re-frame/reg-sub
+  ::redefine-periodization-level-txt
+  redefine-periodization-level-txt)
+
+(defn redefine-periodization-level
+  [level]
+  (assoc {"Iniciante"     "deselected"
+          "Intermediário" "deselected"
+          "Avançado"      "deselected"}
+         level
+         "selected-light"))
 (re-frame/reg-sub
   ::redefine-periodization-level
+  :<- [::redefine-periodization-level-txt]
   redefine-periodization-level)
 
 (defn-traced redefine-periodization-level-select
@@ -423,6 +817,19 @@
 (re-frame/reg-event-fx
   ::redefine-periodization-planning-end-event
   redefine-periodization-planning-end-event)
+
+(defn redef-prdz-planning-months-duration
+  [[planning-start planning-end]]
+   (let [total-days (util/days-difference planning-end planning-start)
+         months-amount (Math.round (/ total-days 30.5))
+         days-reminder (rem total-days 30.5)
+         months (if (zero? months-amount) 1 months-amount)]
+     (str (when (> days-reminder 0) "+/- ") months (if (> months 1) " meses" " mês"))))
+(re-frame/reg-sub
+  ::redef-prdz-planning-months-duration
+  :<- [::redefine-periodization-planning-start]
+  :<- [::redefine-periodization-planning-end]
+  redef-prdz-planning-months-duration)
 
 (defn redefine-periodization-planning-duration
   [[planning-start planning-end]]
@@ -526,7 +933,7 @@
                                              :days new-calendar-days})))
 (re-frame/reg-event-db ::update-calendar update-calendar)
 
-(defcard-rg Redefinir-Periodização
+#_(defcard-rg Redefinir-Periodização
   (fn [devcard-data _]
     (let [{:keys [hidden?]} @devcard-data]
       (swap! devcards-hidden conj hidden?)
@@ -566,7 +973,7 @@
             color: black;
           }"]
          [:div.goal
-          {:style #js {:backgroundColor "#dedede"
+          {:style #js {:backgroundColor "#ebebeb"
                        :height "14vh"
                        :minWidth "500px"
                        :marginTop "2px"
@@ -605,7 +1012,7 @@
              :onClick #(re-frame/dispatch [::redefine-periodization-goal-select "Resistência"])}
             "Resistência"]]]
          [:div.level
-          {:style #js {:backgroundColor "#dedede"
+          {:style #js {:backgroundColor "#ebebeb"
                        :height "14vh"
                        :minWidth "500px"
                        :padding "0 10px"
@@ -638,7 +1045,7 @@
              :onClick #(re-frame/dispatch [::redefine-periodization-level-select "Avançado"])}
             "Avançado"]]]
          [:div.week
-          {:style #js {:backgroundColor "#dedede"
+          {:style #js {:backgroundColor "#ebebeb"
                        :height "14vh"
                        :minWidth "500px"
                        :padding "0 10px"
@@ -691,7 +1098,7 @@
              :onClick #(re-frame/dispatch [::redefine-periodization-week-sessions-toggle "Sábado"])}
             "Sab"]]]
           [:div.adjust-session-time
-           {:style #js {:backgroundColor "#dedede"
+           {:style #js {:backgroundColor "#ebebeb"
                         :height "12vh"
                         :display "grid"
                         :grid "2fr 1fr / 1fr 1fr 1fr"
@@ -738,7 +1145,7 @@
              :onClick #(re-frame/dispatch [::redefine-periodization-session-time-target-add 300])}
             [:span {:style #js {:paddingBottom "2px"}} "+"]]]
         [:div.duration-selector
-         {:style #js {:backgroundColor "#dedede"
+         {:style #js {:backgroundColor "#ebebeb"
                       :height "14vh"
                       :minWidth "500px"
                       :padding "0 10px"
@@ -763,8 +1170,8 @@
                   (set! (-> (reagent/dom-node this) .-onchange)
                         #(re-frame/dispatch [::redefine-periodization-planning-end-event
                                              (-> % .-target .-value)])))}])]]
-        [:div.duration
-         {:style #js {:backgroundColor "#dedede"
+        [:div.duration-text
+         {:style #js {:backgroundColor "#ebebeb"
                       :height "10vh"
                       :minWidth "500px"
                       :padding "0 10px"
@@ -782,7 +1189,7 @@
                         :color "black"}}
            @(re-frame/subscribe [::redefine-periodization-planning-duration])]]
          #_[:div.adjust-buttons
-          {:style #js {:backgroundColor "#dedede"
+          {:style #js {:backgroundColor "#ebebeb"
                        :height "16vh"
                        :display "flex"
                        :justifyContent "space-around"
@@ -1091,7 +1498,7 @@
          :onClick #(re-frame/dispatch [::events/session-intensity-box-clicked])}
         [:b (str reps-min "-" reps-max "RM")] [:span "Intensidade"]]]
       [:div.adjust-intensity
-       {:style #js {:backgroundColor "#dedede"
+       {:style #js {:backgroundColor "#ebebeb"
                     :height "14vh"
                     :display @(re-frame/subscribe
                                 [::app-state/adjust-intensity-display])
@@ -1161,7 +1568,7 @@
        [:> chevron-right]]
        ]
       [:div.adjust-sets
-       {:style #js {:backgroundColor "#dedede"
+       {:style #js {:backgroundColor "#ebebeb"
                     :height "14vh"
                     :display @(re-frame/subscribe [::app-state/adjust-sets-display])
                     :grid "2fr 1fr / 1fr 1fr 1fr"
@@ -1212,7 +1619,7 @@
         [:span {:style #js {:paddingBottom "2px"}} "+"]]
        ]
       [:div.adjust-rest-time
-       {:style #js {:backgroundColor "#dedede"
+       {:style #js {:backgroundColor "#ebebeb"
                     :height "14vh"
                     :display @(re-frame/subscribe [::app-state/adjust-rest-time-display])
                     :grid "2fr 1fr / 1fr 1fr 1fr"
@@ -1261,7 +1668,7 @@
         [:span {:style #js {:paddingBottom "2px"}} "+"]]
        ]
       [:div.adjust-buttons
-       {:style #js {:backgroundColor "#dedede"
+       {:style #js {:backgroundColor "#ebebeb"
                     :height "16vh"
                     :display @(re-frame/subscribe [::app-state/adjust-buttons-display])
                     :justifyContent "space-around"
@@ -1986,11 +2393,11 @@
    :heading false})
 
 ;; Isso aqui vai salvar no db do firebase sempre que o domain mudar.
-(defcard-rg external-storage
-  #(into [ext-store/firebase-el])
-  {}
-  {:frame false
-   :heading false})
+;; (defcard-rg external-storage
+;;   #(into [ext-store/firebase-el])
+;;   {}
+;;   {:frame false
+;;    :heading false})
 
 (defn replace-logo [event]
   (let [periodiza-logo (-> js/document (.createElement "img"))
