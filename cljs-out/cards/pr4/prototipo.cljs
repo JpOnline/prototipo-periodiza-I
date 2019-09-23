@@ -336,7 +336,6 @@
                                   :cursor "pointer"}
                     adjust-area {:backgroundColor "#ebebeb"
                                  :height "10vh"
-                                 :minWidth "500px"
                                  :padding "0 10px"
                                  :display "flex"
                                  :flexDirection "column"
@@ -553,7 +552,6 @@
                   [:div.duration-selector
                    {:style #js {:backgroundColor "#ebebeb"
                                 :height "10vh"
-                                :minWidth "500px"
                                 :padding "0 10px"
                                 :display @(re-frame/subscribe [::redef-prdz-duration-display])
                                 :justifyContent "space-evenly"
@@ -579,7 +577,6 @@
                   [:div.duration-text
                    {:style #js {:backgroundColor "#ebebeb"
                                 :height "8vh"
-                                :minWidth "500px"
                                 :padding "0 10px"
                                 :display @(re-frame/subscribe [::redef-prdz-duration-display])
                                 :flexDirection "column"
@@ -975,7 +972,6 @@
          [:div.goal
           {:style #js {:backgroundColor "#ebebeb"
                        :height "14vh"
-                       :minWidth "500px"
                        :marginTop "2px"
                        :padding "0 10px"
                        :display "flex"
@@ -1014,7 +1010,6 @@
          [:div.level
           {:style #js {:backgroundColor "#ebebeb"
                        :height "14vh"
-                       :minWidth "500px"
                        :padding "0 10px"
                        :display "flex"
                        :flexDirection "column"
@@ -1047,7 +1042,6 @@
          [:div.week
           {:style #js {:backgroundColor "#ebebeb"
                        :height "14vh"
-                       :minWidth "500px"
                        :padding "0 10px"
                        :display "flex"
                        :flexDirection "column"
@@ -1147,7 +1141,6 @@
         [:div.duration-selector
          {:style #js {:backgroundColor "#ebebeb"
                       :height "14vh"
-                      :minWidth "500px"
                       :padding "0 10px"
                       :display "flex"
                       :justifyContent "space-evenly"
@@ -1173,7 +1166,6 @@
         [:div.duration-text
          {:style #js {:backgroundColor "#ebebeb"
                       :height "10vh"
-                      :minWidth "500px"
                       :padding "0 10px"
                       :display "flex"
                       :flexDirection "column"
