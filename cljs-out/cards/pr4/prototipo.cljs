@@ -2393,11 +2393,11 @@
    :heading false})
 
 ;; Isso aqui vai salvar no db do firebase sempre que o domain mudar.
-;; (defcard-rg external-storage
-;;   #(into [ext-store/firebase-el])
-;;   {}
-;;   {:frame false
-;;    :heading false})
+(defcard-rg external-storage
+  #(into [ext-store/firebase-el])
+  {}
+  {:frame false
+   :heading false})
 
 (defn replace-logo [event]
   (let [periodiza-logo (-> js/document (.createElement "img"))
