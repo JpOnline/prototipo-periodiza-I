@@ -2886,16 +2886,6 @@ return self__.meta26760;
 
 pr4.prototipo.t_pr4$prototipo26759.prototype.devcards$core$IDevcardOptions$ = cljs.core.PROTOCOL_SENTINEL;
 
-pr4.prototipo.t_pr4$prototipo26759.prototype.devcards$core$IDevcardOptions$_devcard_options$arity$2 = (function (this__24579__auto__,devcard_opts__24580__auto__){
-var self__ = this;
-var this__24579__auto____$1 = this;
-return cljs.core.assoc.call(null,devcard_opts__24580__auto__,new cljs.core.Keyword(null,"main-obj","main-obj",-1544409742),(function (){var v__24598__auto__ = ((function (this__24579__auto____$1){
-return (function (){
-return cljs.core.into.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [pr4.external_storage.firebase_el], null));
-});})(this__24579__auto____$1))
-;
-if(cljs.core.fn_QMARK_.call(null,v__24598__auto__)){
-return ((function (v__24598__auto__,this__24579__auto____$1){
 return (function (data_atom__24599__auto__,owner__24600__auto__){
 return reagent.core.as_element.call(null,new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMPTY_NODE, [v__24598__auto__,data_atom__24599__auto__,owner__24600__auto__], null));
 });
