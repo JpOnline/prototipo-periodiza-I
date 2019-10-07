@@ -1246,6 +1246,21 @@
   ::zoom-dates
   zoom-dates)
 
+(defn date-str [date]
+  (let [dd (tick/day-of-month date)
+        MM (tick/int (tick/month date))
+        yyyy (tick/int (tick/year date))
+        day (tick/day-of-week date)
+        pt-week {tick/MONDAY "Segunda"
+                 tick/TUESDAY "Terça"
+                 tick/WEDNESDAY "Quarta"
+                 tick/THURSDAY "Quinta"
+                 tick/FRIDAY "Sexta"
+                 tick/SATURDAY "Sábado"
+                 tick/SUNDAY "Domingo"}]
+    (str dd "/" MM "/" yyyy
+         " (" (clojure.string/join (take 3 (pt-week day))) ")")))
+
 (declare reps->intensity-text)
 
 (defn sessions->chart-data2 [_ _]
@@ -1254,7 +1269,7 @@
                                 (tick/date %1)
                                 (if %3 (tick/date %3) (tick/date %1)))
         zoom-dates @(re-frame/subscribe [::zoom-dates])
-        row-fn (fn [{:keys [idx total-sets reps-max reps-min rest-time]}]
+        row-fn (fn [{:keys [idx date total-sets reps-max reps-min rest-time]}]
                  (let [vol-min (periodization/session-volume reps-min total-sets)
                        vol-max (periodization/session-volume reps-max total-sets)
                        int-min (periodization/reps-to-intensity reps-max)
@@ -1263,6 +1278,7 @@
                       vol-min
                       "color: #3bbcb7"
                       (str "Sessão " (inc idx)
+                           "\n" (date-str date)
                            "\n\n" total-sets " séries"
                            "\n" reps-min "-" reps-max " repetições")
                       vol-min
@@ -1270,6 +1286,7 @@
                       int-min
                       "color: #ffd237"
                       (str "Sessão " (inc idx)
+                           "\n" (date-str date)
                            "\n\nIntensidade: "
                            (reps->intensity-text
                              reps-min
@@ -1277,6 +1294,7 @@
                            "\nRecuperação: " (util/seconds->minute-text rest-time))
                       int-min
                       int-max]))]
+    (println "session-with-date" (first sessions-with-dates-idx))
     (->> sessions-with-dates-idx
          (filter #(apply date-between? (:date %) zoom-dates))
          (map row-fn)
@@ -1918,21 +1936,6 @@
           MM (tick/int (tick/month date))]
       (str dd "/" MM))))
 
-(defn date-str [date]
-  (let [dd (tick/day-of-month date)
-        MM (tick/int (tick/month date))
-        yyyy (tick/int (tick/year date))
-        day (tick/day-of-week date)
-        pt-week {tick/MONDAY "Segunda"
-                 tick/TUESDAY "Terça"
-                 tick/WEDNESDAY "Quarta"
-                 tick/THURSDAY "Quinta"
-                 tick/FRIDAY "Sexta"
-                 tick/SATURDAY "Sábado"
-                 tick/SUNDAY "Domingo"}]
-    (str dd "/" MM "/" yyyy
-         " (" (clojure.string/join (take 3 (pt-week day))) ")")))
-
 (def calendar-chart-options
   #js {:chartArea #js {:width "100%"}
        :legend #js {:position "none"}
@@ -2450,9 +2453,9 @@
            :redef-start   ::redefine-periodization-planning-end-event
            :redef-time    ::redefine-periodization-session-time-target-add))
 
-;; (defn dispatch-an-event [[event & args]]
-;;   (apply #(re-frame/dispatch [event %]) args))
-;;
+(defn dispatch-an-event [[event & args]]
+  (apply #(re-frame/dispatch [event %]) args))
+
 ;; (def events-atom (atom []))
 ;; (defn set-events! [num-events]
 ;;   (reset! events-atom (gen/sample (spec/gen ::dispatch-an-event-args) num-events)))
